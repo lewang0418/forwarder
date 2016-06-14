@@ -1,0 +1,11 @@
+node_types:
+  udp_forwarder.nodes.Server:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      cloudify_agent:
+         default:
+            user: { get_input: agent_user }
+      server:
+        default:
+            image: { get_input: image }
+            flavor_name: { get_input: flavor_name }

@@ -1,0 +1,11 @@
+node_types:
+  udp_forwarder.nodes.Server:
+    derived_from: cloudify.aws.nodes.Instance
+    properties:
+      cloudify_agent:
+        default:
+          user: { get_input: agent_user }
+      image_id:
+        default: { get_input: image }
+      instance_type:
+        default: { get_input: size }

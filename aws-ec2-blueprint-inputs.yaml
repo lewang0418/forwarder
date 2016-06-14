@@ -1,0 +1,7 @@
+image: ami-f95ef58a
+size: t2.small
+agent_user: ubuntu
+host: 192.121.150.80
+port1: 30120
+port2: 30122
+enable_monitoring: false

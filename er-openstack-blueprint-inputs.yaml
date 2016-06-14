@@ -1,0 +1,7 @@
+image: 8535fcf3-6319-4f18-b6f3-d0c8c268ea13
+flavor_name: m1.medium
+agent_user: ubuntu
+host: 192.121.150.80
+port1: 30120
+port2: 30122
+enable_monitoring: true

@@ -1,0 +1,95 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+########################################################
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.3.1/plugin.yaml
+  - types/openstack-types.yaml
+
+
+########################################################
+inputs:
+    image:
+      description: >
+        Image to be used when launching agent VM's
+    flavor_name:
+      description: >
+        Flavor of the agent VM's
+    agent_user:
+      description: >
+        User for connecting to agent VM's
+    host:
+      description: >
+        SIP client IP address
+      type: string
+      default: ""
+    port1:
+      description: >
+        Ingress port number
+      type: integer
+      default: 30120
+    port2:
+      description: >
+        Engress port number
+      type: integer
+      default: 30122
+    enable_monitoring:
+      description: >
+        Set to true to enable monitoring, and false to disable monitoring
+      type: boolean
+      default: false
+
+########################################################
+
+node_templates:
+    udp_forwarder_app:
+        type: cloudify.nodes.SoftwareComponent
+        interfaces:
+           cloudify.interfaces.lifecycle:
+              create: scripts/udp-forwarder-elk-install.sh
+              start:
+                implementation: scripts/udp-forwarder-elk-start.sh
+                inputs:
+                    host: { get_input: host }
+                    port1: { get_input: port1 }
+                    port2: { get_input: port2 }
+                    enable_monitoring: { get_input: enable_monitoring }
+              stop: scripts/udp-forwarder-elk-stop.sh
+        relationships:
+            - type: cloudify.relationships.contained_in
+              target: udp_forwarder_host
+
+    udp_forwarder_host:
+        type: udp_forwarder.nodes.Server
+        relationships:
+            - type: cloudify.openstack.server_connected_to_security_group
+              target: udp_forwarder_security_group
+            - type: cloudify.openstack.server_connected_to_floating_ip
+              target: udp_forwarder_ip
+                
+    udp_forwarder_security_group:
+        type: cloudify.openstack.nodes.SecurityGroup
+        properties:
+            description: Security Group for UDP forwarder VM
+            rules:
+                - remote_ip_prefix: 0.0.0.0/0
+                  port: 30120
+                  protocol: udp
+                - remote_ip_prefix: 0.0.0.0/0
+                  port: 30122
+                  protocol: udp
+
+                  #port_range_min: 1
+                  #port_range_max: 65535
+
+    udp_forwarder_ip:
+        type: cloudify.openstack.nodes.FloatingIP
+
+
+outputs:
+  endpoint:
+    description: Web application endpoint
+    value:
+      udp_forwarder_address: { get_attribute: [ udp_forwarder_ip, floating_ip_address ] }
+
